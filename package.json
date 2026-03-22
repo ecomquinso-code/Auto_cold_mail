@@ -1,12 +1,7 @@
 {
   "name": "shopreply-cold-email",
   "version": "1.0.0",
-  "description": "ShopReply Cold Email Generator — Mini SaaS",
   "engines": {
-    "node": "18.x"
-  },
-  "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "node": "24.x"
   }
 }
