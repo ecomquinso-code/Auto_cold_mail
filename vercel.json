@@ -1,7 +1,9 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/public/index.html" }
+  "routes": [
+    { "src": "/api/notion/(.*)", "dest": "/api/notion/[...path].js" },
+    { "src": "/api/openai", "dest": "/api/openai.js" },
+    { "src": "/api/fetch-site", "dest": "/api/fetch-site.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
