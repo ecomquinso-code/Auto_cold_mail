@@ -577,7 +577,7 @@ function updateSendAllButton() {
 
 // ===== SEND ALL EMAILS =====
 async function sendAllEmails() {
-  const toSend = results.filter(r => r.status === 'done');
+  const toSend = results.filter(r => r.status === 'done' || r.subject);
   if (toSend.length === 0) { showToast('Aucun email à envoyer'); return; }
 
   const btn = document.getElementById('btnSendAll');
