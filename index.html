@@ -609,8 +609,8 @@ RÈGLES (Hormozi) :
 ✓ Pas de "Bonjour, j'espère que vous allez bien"
 ✓ Max 130 mots — ton direct, vouvoiement
 
-Réponds UNIQUEMENT en JSON : {"subject": "...", "body": "..."}`;
-
+Dans le JSON, sépare chaque paragraphe avec \\n\\n dans le champ "body"\n\nRéponds UNIQUEMENT en JSON : {"subject": "...", "body": "..."}`;
+  
   const res = await fetch(API.openai(), {
     method: 'POST',
     headers: {
