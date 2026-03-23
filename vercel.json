@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/notion/(.*)", "dest": "/api/notion/[...path].js" },
-    { "src": "/api/openai", "dest": "/api/openai.js" },
-    { "src": "/api/fetch-site", "dest": "/api/fetch-site.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "functions": {
+    "api/**/*.js": { "runtime": "nodejs22.x" }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
