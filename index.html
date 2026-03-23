@@ -311,7 +311,7 @@ tr:hover td { background: #faf8f7; }
 // En local: utilise les chemins relatifs /api/...
 // Sur Vercel: fonctionne automatiquement
 const API = {
-  notion: (path) => `/api/notion/${path}`,
+  notion: (path) => `/api/notion-proxy?path=${encodeURIComponent(path)}`,
   openai: () => `/api/openai`,
   fetchSite: () => `/api/fetch-site`,
 };
