@@ -10,6 +10,6 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "nodemailer": "^8.0.3"
+    "nodemailer": "^6.10.1"
   }
 }
