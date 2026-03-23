@@ -43,11 +43,11 @@ header {
 .card-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
 
 /* INPUTS */
-input[type=text], input[type=password], input[type=number], textarea {
+input[type=text], input[type=password], input[type=number], textarea, select {
   width: 100%; padding: 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: 8px;
   font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--bg); color: var(--dark); outline: none; transition: border-color 0.2s;
 }
-input:focus, textarea:focus { border-color: var(--purple); }
+input:focus, textarea:focus, select:focus { border-color: var(--purple); }
 .input-row { display: flex; gap: 0.5rem; align-items: center; }
 .input-row input { flex: 1; }
 
@@ -61,6 +61,10 @@ input:focus, textarea:focus { border-color: var(--purple); }
 .btn-rose:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 .btn-ghost:hover { background: var(--bg); color: var(--dark); }
+.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-green { background: #166534; color: white; }
+.btn-green:hover { background: #14532d; }
+.btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-sm { padding: 0.35rem 0.8rem; font-size: 12px; }
 
 /* INFO BOXES */
@@ -80,6 +84,7 @@ tr:hover td { background: #faf8f7; }
 .badge-pending { background: #fef3c7; color: #92400e; }
 .badge-loading { background: #ede9fe; color: #5b21b6; }
 .badge-done { background: #d1fae5; color: #065f46; }
+.badge-sent { background: #14532d; color: #bbf7d0; }
 .badge-error { background: #fee2e2; color: #991b1b; }
 
 /* PROGRESS */
@@ -114,7 +119,7 @@ tr:hover td { background: #faf8f7; }
 .modal { background: var(--card); border-radius: 16px; padding: 1.5rem; max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .email-subject { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--purple); margin-bottom: 0.75rem; background: #f5f0ff; padding: 0.5rem 0.75rem; border-radius: 6px; }
-.email-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; font-size: 14px; line-height: 1.75; white-space: pre-wrap; max-height: 320px; overflow-y: auto; }
+.email-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; font-size: 14px; line-height: 1.75; max-height: 320px; overflow-y: auto; }
 
 /* TOAST */
 .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--dark); color: white; padding: 0.75rem 1.25rem; border-radius: 10px; font-size: 13px; z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s; max-width: 350px; }
@@ -128,7 +133,7 @@ tr:hover td { background: #faf8f7; }
 <header>
   <div class="logo-dot"></div>
   <span class="logo-text">ShopReply</span>
-  <span class="model-badge">GPT-4o</span>
+  <span class="model-badge" id="modelBadge">GPT-4o</span>
   <div id="headerStatus" class="header-status">non configuré</div>
   <span class="logo-tag">Cold Email Generator</span>
 </header>
@@ -145,19 +150,7 @@ tr:hover td { background: #faf8f7; }
   <!-- ===== ÉTAPE 1 : CONFIG ===== -->
   <div id="sectionConfig">
     <div class="section-title">Configuration</div>
-    <div class="section-sub">Tes clés sont sauvegardées dans ton navigateur. À faire une seule fois.</div>
-
-    <div class="card">
-      <div class="card-title">🤖 Clé API OpenAI (GPT-4o)</div>
-      <div class="input-row">
-        <input type="password" id="openaiKey" placeholder="sk-proj-..." />
-        <button class="btn btn-primary" onclick="saveOpenAI()">Valider</button>
-      </div>
-      <div id="openaiStatus"></div>
-      <div style="font-size:12px;color:var(--muted);margin-top:0.5rem">
-        <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--purple)">platform.openai.com</a> → API keys → Create new secret key
-      </div>
-    </div>
+    <div class="section-sub">Ton token est sauvegardé dans ton navigateur. À faire une seule fois.</div>
 
     <div class="card">
       <div class="card-title">📋 Token API Notion</div>
@@ -173,10 +166,13 @@ tr:hover td { background: #faf8f7; }
     </div>
 
     <div class="card">
-      <div class="card-title">📧 Gmail — Comment ça marche</div>
-      <div class="info-box info-green" style="margin-bottom:0">
-        ✅ Après génération, clique <strong>"Ouvrir dans Gmail"</strong> — Gmail s'ouvre avec destinataire, objet et corps pré-remplis. Tu relis et tu envoies en 1 clic. Aucune configuration supplémentaire.
-      </div>
+      <div class="card-title">🤖 Modèle IA</div>
+      <select id="modelSelect" onchange="saveModel()">
+        <option value="gpt-4o" selected>GPT-4o (recommandé)</option>
+        <option value="gpt-4o-mini">GPT-4o Mini (rapide et économique)</option>
+        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+        <option value="o3-mini">o3-mini</option>
+      </select>
     </div>
 
     <div class="card">
@@ -200,7 +196,7 @@ tr:hover td { background: #faf8f7; }
 
     <div class="card">
       <div class="card-title">ID de la base Notion "Prospect"</div>
-      <input type="text" id="notionDbId" value="bc700709f8004b839c5237aa3945d0ef"
+      <input type="text" id="notionDbId" value="bc700709f8004b839c5237aa3945d0ef" style="margin-bottom:1rem" />
 
       <div class="limit-box">
         <span style="font-size:13px;white-space:nowrap">🧪 Limite :</span>
@@ -237,10 +233,10 @@ tr:hover td { background: #faf8f7; }
   <!-- ===== ÉTAPE 3 : GÉNÉRATION ===== -->
   <div id="sectionGen" style="display:none">
     <div class="section-title">Génération des cold emails</div>
-    <div class="section-sub">GPT-4o visite chaque site, analyse le contenu, et rédige un email ultra-personnalisé.</div>
+    <div class="section-sub" id="genSub">GPT-4o visite chaque site, analyse le contenu, et rédige un email ultra-personnalisé.</div>
 
     <div class="info-box info-blue">
-      💡 Après génération, clique <strong>"Gmail →"</strong> sur chaque ligne pour ouvrir l'email pré-rempli dans Gmail.
+      💡 Après génération, clique <strong>"Gmail →"</strong> sur chaque ligne pour ouvrir l'email pré-rempli dans Gmail, ou utilise <strong>"Envoyer tous les emails"</strong> pour l'envoi automatique.
     </div>
 
     <div class="card">
@@ -258,6 +254,9 @@ tr:hover td { background: #faf8f7; }
       </button>
       <button class="btn btn-ghost" id="btnStop" onclick="stopGeneration()" style="display:none">
         ⏹ Arrêter
+      </button>
+      <button class="btn btn-green" id="btnSendAll" onclick="sendAllEmails()" style="display:none">
+        📤 Envoyer tous les emails
       </button>
       <div class="spacer"></div>
       <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Exporter CSV</button>
@@ -308,25 +307,26 @@ tr:hover td { background: #faf8f7; }
 
 <script>
 // ===== CONFIG =====
-// En local: utilise les chemins relatifs /api/...
-// Sur Vercel: fonctionne automatiquement
 const API = {
   notion: (path) => `/api/notion-proxy?path=${path}`,
   openai: () => `/api/openai`,
   fetchSite: () => `/api/fetch-site`,
+  sendEmail: () => `/api/send-email`,
 };
 
 // ===== STATE =====
-let openaiKey = '', notionKey = '', context = '';
+let notionKey = '', context = '';
 let prospects = [], results = [], stopFlag = false;
 let currentEmail = {};
 
 // ===== INIT =====
 window.onload = () => {
-  const ok = localStorage.getItem('sr_openai');
   const nk = localStorage.getItem('sr_notion');
-  if (ok) { document.getElementById('openaiKey').value = ok; openaiKey = ok; showSaved('openaiStatus'); updateHeaderStatus(); }
   if (nk) { document.getElementById('notionKey').value = nk; notionKey = nk; showSaved('notionStatus'); updateHeaderStatus(); }
+
+  const model = localStorage.getItem('sr_model') || 'gpt-4o';
+  document.getElementById('modelSelect').value = model;
+  updateModelBadge(model);
 };
 
 function showSaved(id) {
@@ -335,7 +335,7 @@ function showSaved(id) {
 
 function updateHeaderStatus() {
   const el = document.getElementById('headerStatus');
-  if (openaiKey && notionKey) {
+  if (notionKey) {
     el.textContent = '✓ configuré';
     el.classList.add('ok');
   } else {
@@ -344,17 +344,11 @@ function updateHeaderStatus() {
   }
 }
 
-// ===== SAVE KEYS =====
-function saveOpenAI() {
-  const v = document.getElementById('openaiKey').value.trim();
-  if (!v.startsWith('sk-')) { showToast('Clé OpenAI invalide — doit commencer par sk-'); return; }
-  openaiKey = v;
-  localStorage.setItem('sr_openai', v);
-  showSaved('openaiStatus');
-  updateHeaderStatus();
-  showToast('Clé OpenAI sauvegardée !');
+function updateModelBadge(model) {
+  document.getElementById('modelBadge').textContent = model;
 }
 
+// ===== SAVE KEYS =====
 function saveNotion() {
   const v = document.getElementById('notionKey').value.trim();
   if (!v.startsWith('secret_') && !v.startsWith('ntn_')) { showToast('Token Notion invalide'); return; }
@@ -365,23 +359,33 @@ function saveNotion() {
   showToast('Token Notion sauvegardé !');
 }
 
+function saveModel() {
+  const v = document.getElementById('modelSelect').value;
+  localStorage.setItem('sr_model', v);
+  updateModelBadge(v);
+}
+
 function validateConfig() {
-  if (!openaiKey) { showToast('Entre ta clé OpenAI'); return; }
   if (!notionKey) { showToast('Entre ton token Notion'); return; }
   goToStep(2);
 }
 
 // ===== NAV =====
 function goToStep(n) {
-  ['sectionConfig','sectionProspects','sectionGen'].forEach((s,i) => {
-    const el = document.getElementById(s);
-    if (el) el.style.display = (i+1 === n) ? 'block' : 'none';
-  });
+  document.getElementById('sectionConfig').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('sectionProspects').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('sectionGen').style.display = n === 3 ? 'block' : 'none';
+
   [1,2,3].forEach(s => {
-    const el = document.getElementById('step'+s);
+    const el = document.getElementById('step' + s);
     if (!el) return;
     el.className = 'step' + (s < n ? ' done' : s === n ? ' active' : '');
   });
+
+  if (n === 2 && prospects.length > 0) {
+    document.getElementById('previewSection').style.display = 'block';
+  }
+
   if (n === 3) buildResultsTable();
 }
 
@@ -463,11 +467,12 @@ async function fetchFromNotion() {
 // ===== PREVIEW =====
 function buildPreview() {
   const withInsta = prospects.filter(p => p.insta).length;
+  const model = localStorage.getItem('sr_model') || 'gpt-4o';
   document.getElementById('statsRow').innerHTML = `
     <div class="stat-card"><div class="stat-num">${prospects.length}</div><div class="stat-label">Prospects</div></div>
     <div class="stat-card"><div class="stat-num">${prospects.length}</div><div class="stat-label">Avec email</div></div>
     <div class="stat-card"><div class="stat-num">${withInsta}</div><div class="stat-label">Avec Instagram</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--rose)">4o</div><div class="stat-label">GPT-4o</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--rose)">${model === 'gpt-4o-mini' ? 'mini' : model === 'o3-mini' ? 'o3' : '4o'}</div><div class="stat-label">${model}</div></div>
   `;
   document.getElementById('previewBody').innerHTML =
     prospects.slice(0,15).map((p,i) => `
@@ -496,11 +501,14 @@ function buildResultsTable() {
       <td id="act_${i}"></td>
     </tr>
   `).join('');
+
+  const model = localStorage.getItem('sr_model') || 'gpt-4o';
+  document.getElementById('genSub').textContent = `${model} visite chaque site, analyse le contenu, et rédige un email ultra-personnalisé.`;
+  updateSendAllButton();
 }
 
 // ===== GENERATION =====
 async function startGeneration() {
-  if (!openaiKey) { showToast('Configure ta clé OpenAI'); goToStep(1); return; }
   stopFlag = false;
   context = document.getElementById('contextInput').value;
   document.getElementById('btnGenerate').disabled = true;
@@ -518,7 +526,8 @@ async function startGeneration() {
 
     // Step 2: generate email
     setStatus(i, 'loading', '✍️ Rédaction...');
-    document.getElementById('progressSub').textContent = `GPT-4o rédige pour ${p.site}...`;
+    const model = localStorage.getItem('sr_model') || 'gpt-4o';
+    document.getElementById('progressSub').textContent = `${model} rédige pour ${p.site}...`;
 
     try {
       const email = await generateEmail(p, siteContent, context);
@@ -555,10 +564,60 @@ async function startGeneration() {
   document.getElementById('progressSub').textContent = '';
   document.getElementById('btnGenerate').disabled = false;
   document.getElementById('btnStop').style.display = 'none';
+  updateSendAllButton();
   showToast(`${done} emails générés !`);
 }
 
 function stopGeneration() { stopFlag = true; }
+
+function updateSendAllButton() {
+  const hasDone = results.some(r => r.status === 'done');
+  document.getElementById('btnSendAll').style.display = hasDone ? 'inline-flex' : 'none';
+}
+
+// ===== SEND ALL EMAILS =====
+async function sendAllEmails() {
+  const toSend = results.filter(r => r.status === 'done');
+  if (toSend.length === 0) { showToast('Aucun email à envoyer'); return; }
+
+  const btn = document.getElementById('btnSendAll');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Envoi en cours...';
+
+  let sent = 0, failed = 0;
+
+  for (let i = 0; i < results.length; i++) {
+    const p = results[i];
+    if (p.status !== 'done') continue;
+
+    try {
+      const res = await fetch(API.sendEmail(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: p.email, subject: p.subject, body: p.body })
+      });
+      const data = await res.json();
+      if (data.success) {
+        p.status = 'sent';
+        sent++;
+        document.getElementById(`stat_${i}`).innerHTML = '<span class="badge badge-sent">📤 Envoyé</span>';
+      } else {
+        failed++;
+        document.getElementById(`stat_${i}`).innerHTML = '<span class="badge badge-error">❌ Échec</span>';
+      }
+    } catch {
+      failed++;
+      document.getElementById(`stat_${i}`).innerHTML = '<span class="badge badge-error">❌ Échec</span>';
+    }
+
+    await sleep(1500);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '📤 Envoyer tous les emails';
+  updateSendAllButton();
+  showToast(`${sent} email${sent > 1 ? 's' : ''} envoyé${sent > 1 ? 's' : ''} sur ${toSend.length}`);
+}
 
 // ===== FETCH SITE =====
 async function fetchSite(site) {
@@ -577,6 +636,7 @@ async function fetchSite(site) {
 
 // ===== GENERATE EMAIL =====
 async function generateEmail(prospect, siteContent, ctx) {
+  const model = localStorage.getItem('sr_model') || 'gpt-4o';
   const prompt = `Tu es un expert en cold email B2B pour SaaS. Tu vas rédiger le cold email de prospection parfait.
 
 CONTEXTE SHOPREPLY :
@@ -608,17 +668,24 @@ RÈGLES (Hormozi) :
 ✓ Un seul CTA
 ✓ Pas de "Bonjour, j'espère que vous allez bien"
 ✓ Max 130 mots — ton direct, vouvoiement
+✓ OBLIGATOIRE : dans le champ "body" du JSON, sépare chaque paragraphe par \\n\\n
+✓ Structure exacte (6 paragraphes séparés par \\n\\n) :
+  [1] Accroche : cite un produit réel vu sur le site
+  [2] Problème : cliente écrit la nuit, pas de réponse, vente perdue
+  [3] Sophie : répond en 8 secondes, 24h/24, voix de la marque
+  [4] 1 preuve chiffrée : 94% auto-résolu OU 11h/semaine économisées
+  [5] CTA : shopreply.it.com — 14 jours gratuits, aucune CB.
+  [6] Eduard Quinso / Fondateur ShopReply 🌸
 
-Dans le JSON, sépare chaque paragraphe avec \\n\\n dans le champ "body"\n\nRéponds UNIQUEMENT en JSON : {"subject": "...", "body": "..."}`;
-  
+Réponds UNIQUEMENT en JSON : {"subject": "...", "body": "..."}`;
+
   const res = await fetch(API.openai(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openaiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.75,
       max_tokens: 800,
@@ -661,7 +728,7 @@ function showEmail(i) {
   document.getElementById('modalTitle').textContent = p.site;
   document.getElementById('modalTo').textContent = `→ ${p.email}`;
   document.getElementById('modalSubject').textContent = 'Objet : ' + p.subject;
-  document.getElementById('modalBody').textContent = p.body;
+  document.getElementById('modalBody').innerHTML = (p.body || '').replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
   document.getElementById('modalBg').classList.add('open');
 }
 
@@ -688,7 +755,7 @@ function openGmail() {
 
 // ===== EXPORT =====
 function exportCSV() {
-  const done = results.filter(r => r.status === 'done');
+  const done = results.filter(r => r.status === 'done' || r.status === 'sent');
   if (done.length === 0) { showToast('Aucun email à exporter'); return; }
   const rows = [['site','email','subject','body']];
   done.forEach(p => rows.push([
