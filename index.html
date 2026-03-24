@@ -488,20 +488,41 @@ function buildPreview() {
 
 // ===== BUILD TABLE =====
 function buildResultsTable() {
-  document.getElementById('progressCount').textContent = `0 / ${results.length}`;
-  document.getElementById('resultsBody').innerHTML = results.map((p,i) => `
-    <tr id="row_${i}">
-      <td style="color:var(--muted);font-size:12px">${i+1}</td>
-      <td>
-        <div style="font-weight:500">${p.site}</div>
-        <div style="font-size:11px;color:var(--muted)">${p.email}</div>
-      </td>
-      <td id="subj_${i}" style="font-size:12px;color:var(--muted)">—</td>
-      <td id="stat_${i}"><span class="badge badge-pending">En attente</span></td>
-      <td id="act_${i}"></td>
-    </tr>
-  `).join('');
+  const hasGenerated = results.some(r => r.subject);
 
+  if (!hasGenerated) {
+    document.getElementById('resultsBody').innerHTML = results.map((p,i) => `
+      <tr id="row_${i}">
+        <td style="color:var(--muted);font-size:12px">${i+1}</td>
+        <td>
+          <div style="font-weight:500">${p.site}</div>
+          <div style="font-size:11px;color:var(--muted)">${p.email}</div>
+        </td>
+        <td id="subj_${i}" style="font-size:12px;color:var(--muted)">—</td>
+        <td id="stat_${i}"><span class="badge badge-pending">En attente</span></td>
+        <td id="act_${i}"></td>
+      </tr>
+    `).join('');
+  } else {
+    // Restore DOM state from results[] without wiping generated data
+    results.forEach((p, i) => {
+      if (!document.getElementById(`row_${i}`)) return;
+      if (p.subject) document.getElementById(`subj_${i}`).textContent = p.subject;
+      if (p.status === 'done') {
+        setStatus(i, 'done', '✓ Généré');
+        document.getElementById(`act_${i}`).innerHTML = `
+          <button class="btn btn-ghost btn-sm" onclick="showEmail(${i})">Voir</button>
+          <button class="btn btn-rose btn-sm" onclick="openGmailIdx(${i})">Gmail →</button>
+        `;
+      } else if (p.status === 'sent') {
+        document.getElementById(`stat_${i}`).innerHTML = '<span class="badge badge-sent">📤 Envoyé</span>';
+      } else if (p.status === 'error') {
+        setStatus(i, 'error', '❌ Erreur');
+      }
+    });
+  }
+
+  document.getElementById('progressCount').textContent = `0 / ${results.length}`;
   const model = localStorage.getItem('sr_model') || 'gpt-4o';
   document.getElementById('genSub').textContent = `${model} visite chaque site, analyse le contenu, et rédige un email ultra-personnalisé.`;
   updateSendAllButton();
@@ -571,13 +592,14 @@ async function startGeneration() {
 function stopGeneration() { stopFlag = true; }
 
 function updateSendAllButton() {
-  const hasDone = results.some(r => r.status === 'done');
+  const hasDone = results.some(r => r.subject && r.body && r.email);
   document.getElementById('btnSendAll').style.display = hasDone ? 'inline-flex' : 'none';
 }
 
 // ===== SEND ALL EMAILS =====
 async function sendAllEmails() {
-  const toSend = results.filter(r => r.status === 'done' || r.subject);
+  console.log('results at send time:', JSON.stringify(results.map(r => ({site: r.site, status: r.status, hasSubject: !!r.subject}))));
+  const toSend = results.filter(r => r.subject && r.body && r.email);
   if (toSend.length === 0) { showToast('Aucun email à envoyer'); return; }
 
   const btn = document.getElementById('btnSendAll');
@@ -588,7 +610,7 @@ async function sendAllEmails() {
 
   for (let i = 0; i < results.length; i++) {
     const p = results[i];
-    if (p.status !== 'done') continue;
+    if (!p.subject || !p.body || !p.email) continue;
 
     try {
       const res = await fetch(API.sendEmail(), {
